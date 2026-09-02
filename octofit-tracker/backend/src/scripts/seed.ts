@@ -1,13 +1,10 @@
 /**
  * Seed the octofit_db database with test data
- *
- * This script will create users, teams, activities, workouts and a leaderboard snapshot.
  */
 import dotenv from 'dotenv';
 dotenv.config();
 
 import mongoose from 'mongoose';
-import db from '../config/database.js';
 import User from '../models/User.js';
 import Team from '../models/Team.js';
 import Activity from '../models/Activity.js';
@@ -30,10 +27,8 @@ async function seed() {
   console.log('Seed the octofit_db database with test data');
 
   await mongoose.connect(CONNECTION);
-
   await clearAll();
 
-  // Create users
   const users = await User.create([
     {
       username: 'alice',
@@ -64,7 +59,6 @@ async function seed() {
     },
   ]);
 
-  // Create teams
   const teams = await Team.create([
     {
       name: 'Team Red Rockets',
@@ -82,7 +76,6 @@ async function seed() {
     },
   ]);
 
-  // Create activities
   const now = new Date();
   await Activity.create([
     {
@@ -117,52 +110,27 @@ async function seed() {
     },
   ]);
 
-  // Create workouts
   await Workout.create([
     { name: 'Quick 20-min Run', description: 'Easy tempo run', duration: 20, difficulty: 'medium' },
     { name: 'Full Body Strength', description: 'Circuit style strength workout', duration: 45, difficulty: 'hard' },
     { name: 'Morning Yoga Flow', description: 'Gentle mobility and breathing', duration: 30, difficulty: 'easy' },
   ]);
 
-  // Build a simple leaderboard snapshot
   const topUsers = await User.find().select('-password').sort({ totalPoints: -1 }).limit(10);
   const topTeams = await Team.find().sort({ totalPoints: -1 }).limit(10);
 
-  const entries: any[] = [];
+  const entries: Array<{ type: 'user' | 'team'; refId: any; name: string; points: number }> = [];
   topUsers.forEach((u) => entries.push({ type: 'user', refId: u._id, name: `${u.firstName} ${u.lastName}`, points: u.totalPoints }));
   topTeams.forEach((t) => entries.push({ type: 'team', refId: t._id, name: t.name, points: t.totalPoints }));
 
   await Leaderboard.create({ generatedAt: new Date(), entries });
 
-  console.log('Seeding complete');
+  console.log('Database seeding complete');
+  console.log(`Users: ${users.length}, Teams: ${teams.length}`);
   await mongoose.disconnect();
 }
 
 seed().catch((err) => {
-  console.error('Seed failed:', err);
+  console.error('Error seeding database:', err);
   process.exit(1);
 });
-import mongoose from 'mongoose';
-
-const connectionString = process.env.MONGODB_URI || 'mongodb://localhost:27017/octofit_db';
-
-/**
- * Seed the octofit_db database with test data
- */
-async function seedDatabase() {
-  try {
-    await mongoose.connect(connectionString);
-
-    console.log('Connected to octofit_db');
-
-    // TODO: Add seed data for users, teams, activities, leaderboard, and workouts
-
-    console.log('Database seeding complete');
-    await mongoose.disconnect();
-  } catch (error) {
-    console.error('Error seeding database:', error);
-    process.exit(1);
-  }
-}
-
-seedDatabase();

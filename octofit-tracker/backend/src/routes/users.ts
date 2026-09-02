@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     const users = await User.find().select('-password').limit(100);
     res.json(users);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch users' });
+    res.status(500).json({ error: 'Failed to fetch users', details: err instanceof Error ? err.message : String(err) });
   }
 });
 

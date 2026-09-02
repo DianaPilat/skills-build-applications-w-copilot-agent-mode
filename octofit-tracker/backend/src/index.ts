@@ -12,15 +12,19 @@ import workoutsRouter from './routes/workouts.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = Number(process.env.PORT || 8000);
+const codespaceName = process.env.CODESPACE_NAME;
+export const apiBaseUrl = codespaceName
+  ? `https://${codespaceName}-8000.app.github.dev`
+  : 'http://localhost:8000';
 
-// CORS origins (include Codespaces preview host when available)
+// CORS origins (include Codespaces preview hosts when available)
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-const allowedOrigins = [frontendUrl];
-if (process.env.CODESPACE_NAME) {
-  const name = process.env.CODESPACE_NAME;
-  allowedOrigins.push(`https://${name}-8000.githubpreview.dev`);
-  allowedOrigins.push(`https://${name}-8000.preview.app.github.dev`);
+const allowedOrigins = [frontendUrl, apiBaseUrl];
+if (codespaceName) {
+  allowedOrigins.push(`https://${codespaceName}-5173.app.github.dev`);
+  allowedOrigins.push(`https://${codespaceName}-8000.githubpreview.dev`);
+  allowedOrigins.push(`https://${codespaceName}-8000.preview.app.github.dev`);
 }
 
 app.use(
@@ -47,9 +51,14 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/config', (req, res) => {
+  res.json({ apiBaseUrl, environment: process.env.NODE_ENV || 'development' });
+});
+
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`API base URL: ${apiBaseUrl}`);
 });
 
 export default app;

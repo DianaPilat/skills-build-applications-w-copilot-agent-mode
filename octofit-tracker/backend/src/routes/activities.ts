@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     const activities = await Activity.find().sort({ dateCompleted: -1 }).limit(200);
     res.json(activities);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch activities' });
+    res.status(500).json({ error: 'Failed to fetch activities', details: err instanceof Error ? err.message : String(err) });
   }
 });
 
